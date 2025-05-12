@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clinic System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #00b4d8, #0077b6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: #00b4d8;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0,180,216,0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #00b4d8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #0077b6;
+            transform: translateY(-1px);
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: rgba(220, 53, 69, 0.1);
+            display: none;
+        }
+
+        .success {
+            color: #198754;
+            font-size: 14px;
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: rgba(25, 135, 84, 0.1);
+            display: none;
+        }
+
+        .error:not(:empty), .success:not(:empty) {
+            display: block;
+        }
+
+        .divider {
+            height: 1px;
+            background: #ddd;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .divider::after {
+            content: 'or';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 0 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            input, select, button {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-section">
+            <h1>Register as Patient</h1>
+            <div id="regError" class="error"></div>
+            <div class="input-group">
+                <input type="text" id="regName" placeholder="Full Name" required>
+            </div>
+            <div class="input-group">
+                <input type="email" id="regEmail" placeholder="Email Address" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="regPassword" placeholder="Password" required>
+            </div>
+            <button onclick="register()">Create Account</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="form-section">
+            <h1>Login</h1>
+            <div id="loginError" class="error"></div>
+            <div id="loginSuccess" class="success"></div>
+            <div class="input-group">
+                <input type="email" id="logEmail" placeholder="Email Address" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="logPassword" placeholder="Password" required>
+            </div>
+            <button onclick="login()">Sign In</button>
+        </div>
+    </div>
+
+    <script>
+        function showError(elementId, message) {
+            document.getElementById(elementId).textContent = message;
+        }
+
+        function clearMessages() {
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('loginSuccess').textContent = '';
+            document.getElementById('regError').textContent = '';
+        }
+
+        async function register() {
+            clearMessages();
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name: document.getElementById('regName').value,
+                        email: document.getElementById('regEmail').value,
+                        password: document.getElementById('regPassword').value
+                    })
+                });
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    showError('regError', data.error || 'Registration failed');
+                    return;
+                }
+                
+                document.getElementById('loginSuccess').textContent = 'Registration successful! Please login.';
+                // Clear registration form
+                document.getElementById('regName').value = '';
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regPassword').value = '';
+            } catch (error) {
+                showError('regError', 'Registration failed: ' + error.message);
+            }
+        }
+
+        async function login() {
+            clearMessages();
+            try {
+                const email = document.getElementById('logEmail').value;
+                const password = document.getElementById('logPassword').value;
+
+                if (!email || !password) {
+                    showError('loginError', 'Email and password are required');
+                    return;
+                }
+
+                const res = await fetch('http://127.0.0.1:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    showError('loginError', data.error || 'Login failed');
+                    return;
+                }
+
+                // Only save token and show success if login was successful
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('user_role', data.role);
+                
+                // Redirect based on role
+                if (data.role === 'patient') {
+                    window.location.href = '/dashboard';
+                } else if (data.role === 'doctor') {
+                    window.location.href = '/doctor/dashboard';
+                } else if (data.role === 'staff') {
+                    window.location.href = '/staff/dashboard';
+                } else {
+                    document.getElementById('loginSuccess').textContent = 'Login successful!';
+                }
+                
+                // Clear login form
+                document.getElementById('logEmail').value = '';
+                document.getElementById('logPassword').value = '';
+            } catch (error) {
+                showError('loginError', 'Login failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
